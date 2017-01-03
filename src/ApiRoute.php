@@ -36,20 +36,22 @@ class ApiRoute extends ApiRouteSpec implements IRouter
 	 * @var array
 	 */
 	private $actions = [
-		'POST'   => FALSE,
-		'GET'    => FALSE,
-		'PUT'    => FALSE,
-		'DELETE' => FALSE
+		'POST'    => FALSE,
+		'GET'     => FALSE,
+		'PUT'     => FALSE,
+		'DELETE'  => FALSE,
+		'OPTIONS' => FALSE
 	];
 
 	/**
 	 * @var array
 	 */
 	private $default_actions = [
-		'POST'   => 'create',
-		'GET'    => 'read',
-		'PUT'    => 'update',
-		'DELETE' => 'delete'
+		'POST'    => 'create',
+		'GET'     => 'read',
+		'PUT'     => 'update',
+		'DELETE'  => 'delete',
+		'OPTIONS' => 'options'
 	];
 
 	/**
@@ -233,6 +235,26 @@ class ApiRoute extends ApiRouteSpec implements IRouter
 		return $this->formats[$this->getFormat()];
 	}
 
+
+	/**
+	 * @param array $methods
+	 */
+	public function setMethods(array $methods)
+	{
+		foreach ($methods as $method => $action) {
+			if (is_string($method)) {
+				$this->setAction($action, $method);
+			} else {
+				$m = $action;
+
+				if (isset($this->default_actions[$m])) {
+					$this->setAction($this->default_actions[$m], $m);
+				}
+			}
+		}
+	}
+
+
 	/**
 	 * @return array
 	 */
@@ -272,9 +294,16 @@ class ApiRoute extends ApiRouteSpec implements IRouter
 	 */
 	public function match(Nette\Http\IRequest $httpRequest)
 	{
+		/**
+		 * ApiRoute can be easily disabled
+		 */
+		if ($this->disable) {
+			return NULL;
+		}
+
 		$url = $httpRequest->getUrl();
 
-		$path = '/' . preg_replace('/^' . str_replace('/', '\/', preg_quote($url->getBasePath())) . '/', '', $url->getPath());
+		$path = $url->getPath();
 
 		/**
 		 * Build path mask
